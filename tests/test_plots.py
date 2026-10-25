@@ -4,6 +4,7 @@ Tests for quantstats.plots module
 
 import os
 import tempfile
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -53,6 +54,22 @@ class TestPlotFunctions:
         """Test yearly returns bar chart."""
         fig = plots.yearly_returns(sample_returns, show=False)
         assert fig is not None
+
+    def test_yearly_returns_uses_fixed_year_labels(self):
+        returns = pd.Series(
+            [0.1, -0.05], index=pd.date_range("2025", periods=2, freq="YE")
+        )
+
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "error", message="set_ticklabels.*fixed number of ticks"
+            )
+            fig = plots.yearly_returns(returns, show=False)
+
+        assert [tick.get_text() for tick in fig.axes[0].get_xticklabels()] == [
+            "2025",
+            "2026",
+        ]
 
     def test_histogram(self, sample_returns, sample_benchmark):
         """Test histogram plot."""
