@@ -71,6 +71,25 @@ class TestPlotFunctions:
             "2026",
         ]
 
+    @pytest.mark.parametrize("with_benchmark", [False, True])
+    def test_yearly_returns_thins_long_year_labels(self, with_benchmark):
+        returns = pd.Series(
+            [0.01, -0.005] * 12 + [0.01],
+            index=pd.date_range("2000", periods=25, freq="YE"),
+        )
+        benchmark = returns / 2 if with_benchmark else None
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "error", message="set_ticklabels.*fixed number of ticks"
+            )
+            fig = plots.yearly_returns(returns, benchmark=benchmark, show=False)
+
+        ax = fig.axes[0]
+        assert [tick.get_text() for tick in ax.get_xticklabels()] == [
+            str(year) if i % 2 == 0 else "" for i, year in enumerate(range(2000, 2025))
+        ]
+        np.testing.assert_array_equal(ax.get_xticks(), np.arange(25))
+
     def test_histogram(self, sample_returns, sample_benchmark):
         """Test histogram plot."""
         fig = plots.histogram(sample_returns, sample_benchmark, show=False)
